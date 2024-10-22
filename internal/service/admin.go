@@ -1,0 +1,101 @@
+package service
+
+import (
+	"context"
+
+	pb "blog-auth/genproto/userservice"
+	logger "blog-auth/internal/logger"
+	"blog-auth/internal/storage/postgres"
+)
+
+type AdminService interface {
+	CreateAdmin(ctx context.Context, req *pb.CreateAdminReq) (*pb.CreateAdminRes, error)
+	UpdateAdmin(ctx context.Context, req *pb.UpdateAdminReq) (*pb.UpdateAdminRes, error)
+	GetAdmin(ctx context.Context, req *pb.GetAdminReq) (*pb.GetAdminRes, error)
+	ForgetPassword(ctx context.Context, req *pb.ForgetPasswordReq) (*pb.ForgetPasswordRes, error)
+	GetAllAdmins(ctx context.Context, req *pb.GetAllAdminReq) (*pb.GetAllAdminRes, error)
+	DeleteAdmin(ctx context.Context, req *pb.DeleteAdminReq) (*pb.DeleteAdminRes, error)
+}
+type AdminServiceImpl struct {
+	admin postgres.AdminStorage
+	pb.UnimplementedAdminServiceServer
+}
+
+func NewAdminService(admin AdminService) *AdminServiceImpl {
+	return &AdminServiceImpl{
+		admin: admin,
+	}
+}
+
+func (s *AdminServiceImpl) CreateAdmin(ctx context.Context, req *pb.CreateAdminReq) (*pb.CreateAdminRes, error) {
+	logs, err := logger.NewLogger()
+	if err != nil {
+		return nil, err
+	}
+	resp , err := s.admin.CreateAdmin(ctx, req)
+	if err != nil {
+		logs.Error("Error while calling CreateAdmin")
+	}
+	logs.Info("Successfully create admin")
+	return resp, nil
+}
+
+func (s *AdminServiceImpl) UpdateAdmin(ctx context.Context, req *pb.UpdateAdminReq) (*pb.UpdateAdminRes, error) {
+	logs, err := logger.NewLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.admin.UpdateAdmin(ctx, req)
+	if err != nil {
+		logs.Error("Error while calling Update Admin")
+	}
+	logs.Info("Successfully update admin")
+	return resp, nil
+}
+
+func (s *AdminServiceImpl) GetAdmin(ctx context.Context, req *pb.GetAdminReq) (*pb.GetAdminRes, error) {
+	logs, err := logger.NewLogger()
+	if err != nil {
+		return nil, err
+	}
+	
+	resp , err := s.admin.GetAdmin(ctx,req)
+	if err != nil {
+		logs.Error("Error while calling Get Admin")
+	}
+	logs.Info("Successfully get admin")
+	return resp, nil
+}
+
+func (s *AdminServiceImpl) ForgetPassword(ctx context.Context, req *pb.ForgetPasswordReq) (*pb.ForgetPasswordRes, error) {
+	return nil, nil
+}
+
+func (s *AdminServiceImpl) GetAllAdmins(ctx context.Context, req *pb.GetAllAdminReq) (*pb.GetAllAdminRes, error) {
+	logs, err := logger.NewLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.admin.GetAllAdmins(ctx, req)
+	if err != nil {
+		logs.Error("Error while calling GetAllAdmins")
+	}
+	logs.Info("Successfully get all admins")
+	return resp, nil
+}
+
+func (s *AdminServiceImpl) DeleteAdmin(ctx context.Context, req *pb.DeleteAdminReq) (*pb.DeleteAdminRes, error) {
+	logs, err := logger.NewLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.admin.DeleteAdmin(ctx, req)
+	if err != nil {
+		logs.Error("Error while deleting admin")
+	}
+	logs.Info("Successfully delete admin")
+	return resp,nil
+}

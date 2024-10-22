@@ -1,0 +1,89 @@
+syntax="proto3";
+
+option  go_package = "genproto/userservice";
+
+package userservice;
+
+service UserService {
+  rpc RegisterUser(RegisterUserReq) returns (RegisterUserRes);
+  rpc Login(LoginReq) returns(LoginRes);
+  rpc ForgotPassword(ForgotPasswordReq) returns(ForgotPasswordRes);
+  rpc GetUserByID(GetUserByIDReq) returns (GetUserByIDRes);
+  rpc GetAllUser(GetAllUserReq) returns (GetAllUserRes);
+  rpc UpdateUser(UpdateUserReq) returns(UpdateUserRes);
+  rpc DeleteUser(DeleteUserReq) returns(DeleteUserRes);
+}
+
+
+message UserModel{
+  string id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string password = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  string role = 8;
+}
+
+
+message RegisterUserReq{
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message RegisterUserRes{
+  UserModel UserRes = 1;
+}
+
+message LoginReq{
+  string email = 1;
+  string password = 2;
+}
+
+message LoginRes{
+  UserModel UserRes = 1;
+}
+
+message ForgotPasswordReq{
+  string email = 1;
+}
+
+message ForgotPasswordRes{
+  string message = 1;
+}
+
+message GetUserByIDReq{
+  string userid = 1;
+}
+
+message GetUserByIDRes{
+  UserModel UserRes = 1;
+}
+
+message GetAllUserReq{
+  UserModel UserReq = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message GetAllUserRes{
+  repeated UserModel UserRes = 1;
+}
+
+message UpdateUserReq{
+  UserModel UserReq = 1;
+}
+
+message UpdateUserRes{
+  UserModel UserRes = 1;
+}
+
+message DeleteUserReq{
+  string id = 1;
+}
+
+message DeleteUserRes{
+  string message = 1;
+}
