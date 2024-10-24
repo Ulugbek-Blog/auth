@@ -11,9 +11,8 @@ type UserService interface {
 	Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes, error)
 	RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*pb.RegisterUserRes, error)
 	ForgotPassword(ctx context.Context, req *pb.ForgotPasswordReq) (*pb.ForgotPasswordRes, error)
-	GetUserByID(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error)
-	GetAllUsers(ctx context.Context, req *pb.GetAllUserReq) (*pb.GetAllUserRes, error)
 	UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error)
+	VerifyEmail(ctx context.Context, req *pb.VerifyEmailReq) (*pb.VerifyEmailRes, error)
 }
 
 type UserServiceImpl struct {
@@ -64,32 +63,6 @@ func (s *UserServiceImpl) ForgotPassword(ctx context.Context, req *pb.ForgotPass
 	logs.Info("Successfully send the email!")
 	return resp, nil
 }
-func (s *UserServiceImpl) GetUserByID(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error) {
-	logs, err := logger.NewLogger()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := s.auth.GetUserByID(ctx, req)
-	if err != nil {
-		logs.Error("Error while calling GetUserByID")
-		return nil, err
-	}
-	logs.Info("Successfully get the user")
-	return resp, nil
-}
-func (s *UserServiceImpl) GetAllUsers(ctx context.Context, req *pb.GetAllUserReq) (*pb.GetAllUserRes, error) {
-	logs, err := logger.NewLogger()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := s.auth.GetAllUsers(ctx, req)
-	if err != nil {
-		logs.Error("Error while calling GetAllUsers")
-		return nil, err
-	}
-	logs.Info("Successfully Get all users")
-	return resp, nil
-}
 func (s *UserServiceImpl) UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error) {
 	logs, err := logger.NewLogger()
 	if err != nil {
@@ -101,5 +74,18 @@ func (s *UserServiceImpl) UpdateUser(ctx context.Context, req *pb.UpdateUserReq)
 		return nil, err
 	}
 	logs.Info("Successfully updated user")
+	return resp, nil
+}
+func (s *UserServiceImpl) VerifyEmail(ctx context.Context, req *pb.VerifyEmailReq) (*pb.VerifyEmailRes, error) {
+	logs, err := logger.NewLogger()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := s.auth.VerifyEmail(ctx, req)
+	if err != nil {
+		logs.Error("Error while calling VerifyEmail")
+		return nil, err
+	}
+	logs.Info("Successfully verified the email")
 	return resp, nil
 }

@@ -122,11 +122,7 @@ func (s *userStorage) RegisterUser(ctx context.Context, req *pb.RegisterUserReq)
 		logs.Error("Error getting user", zap.Error(err))
 		return nil, err
 	}
-	if err != nil {
-		logs.Error("Error with create user")
-		return nil, err
-
-	}
+	
 	userM := &pb.UserModel{
 		Id:        user.Id,
 		Fname:     user.Fname,

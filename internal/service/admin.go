@@ -9,8 +9,7 @@ import (
 )
 
 type AdminService interface {
-	CreateAdmin(ctx context.Context, req *pb.CreateUserReq) (*pb.CreateUserRes, error)
-	UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error)
+	CreateUser(ctx context.Context, req *pb.CreateUserReq) (*pb.CreateUserRes, error)
 	GetUser(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error)
 	ForgetPassword(ctx context.Context, req *pb.ForgetPasswordReq) (*pb.ForgetPasswordRes, error)
 	GetAllUsers(ctx context.Context, req *pb.GetAllUsersReq) (*pb.GetAllUsersRes, error)
@@ -32,7 +31,7 @@ func (s *AdminServiceImpl) CreateAdmin(ctx context.Context, req *pb.CreateUserRe
 	if err != nil {
 		return nil, err
 	}
-	resp , err := s.admin.CreateAdmin(ctx, req)
+	resp , err := s.admin.CreateUser(ctx, req)
 	if err != nil {
 		logs.Error("Error while calling CreateAdmin")
 	}
@@ -40,31 +39,17 @@ func (s *AdminServiceImpl) CreateAdmin(ctx context.Context, req *pb.CreateUserRe
 	return resp, nil
 }
 
-func (s *AdminServiceImpl) UpdateAdmin(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error) {
-	logs, err := logger.NewLogger()
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := s.admin.UpdateAdmin(ctx, req)
-	if err != nil {
-		logs.Error("Error while calling Update Admin")
-	}
-	logs.Info("Successfully update admin")
-	return resp, nil
-}
-
-func (s *AdminServiceImpl) GetAdmin(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error) {
+func (s *AdminServiceImpl) GetUserByID(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error) {
 	logs, err := logger.NewLogger()
 	if err != nil {
 		return nil, err
 	}
 	
-	resp , err := s.admin.GetAdmin(ctx,req)
+	resp , err := s.admin.GetUser(ctx,req)
 	if err != nil {
-		logs.Error("Error while calling Get Admin")
+		logs.Error("Error while calling Get User")
 	}
-	logs.Info("Successfully get admin")
+	logs.Info("Successfully get user")
 	return resp, nil
 }
 
@@ -72,27 +57,27 @@ func (s *AdminServiceImpl) ForgetPassword(ctx context.Context, req *pb.ForgetPas
 	return nil, nil
 }
 
-func (s *AdminServiceImpl) GetAllAdmins(ctx context.Context, req *pb.GetAllAdminReq) (*pb.GetAllAdminRes, error) {
+func (s *AdminServiceImpl) GetAllAdmins(ctx context.Context, req *pb.GetAllUsersReq) (*pb.GetAllUsersRes, error) {
 	logs, err := logger.NewLogger()
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := s.admin.GetAllAdmins(ctx, req)
+	resp, err := s.admin.GetAllUsers(ctx, req)
 	if err != nil {
-		logs.Error("Error while calling GetAllAdmins")
+		logs.Error("Error while calling GetAllUsers")
 	}
-	logs.Info("Successfully get all admins")
+	logs.Info("Successfully get all users")
 	return resp, nil
 }
 
-func (s *AdminServiceImpl) DeleteAdmin(ctx context.Context, req *pb.DeleteAdminReq) (*pb.DeleteAdminRes, error) {
+func (s *AdminServiceImpl) DeleteUser(ctx context.Context, req *pb.DeleteUserReq) (*pb.DeleteUserRes, error) {
 	logs, err := logger.NewLogger()
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := s.admin.DeleteAdmin(ctx, req)
+	resp, err := s.admin.DeleteUser(ctx, req)
 	if err != nil {
 		logs.Error("Error while deleting admin")
 	}
