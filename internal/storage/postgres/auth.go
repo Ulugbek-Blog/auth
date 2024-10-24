@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
 	pb "blog-auth/genproto/userservice"
 	logger "blog-auth/internal/logger"
+
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,9 +20,8 @@ type UsersStorage interface {
 	Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes, error)
 	RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*pb.RegisterUserRes, error)
 	ForgotPassword(ctx context.Context, req *pb.ForgotPasswordReq) (*pb.ForgotPasswordRes, error)
-	GetUserByID(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error)
-	GetAllUsers(ctx context.Context, req *pb.GetAllUserReq) (*pb.GetAllUserRes, error)
 	UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error)
+	VerifyEmail(ctx context.Context, req *pb.VerifyEmailReq) (*pb.VerifyEmailRes, error)
 }
 
 func hashPassword(password string) (string, error) {
@@ -69,8 +68,8 @@ func (s *userStorage) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes
 	var password string
 	err = s.db.QueryRow(query, req.Email).Scan(
 		&res.UserRes.Id,
-		&res.UserRes.Name,
-		&res.UserRes.Lastname,
+		&res.UserRes.Fname,
+		&res.UserRes.Lname,
 		&res.UserRes.Email,
 		&password,
 		&res.UserRes.Role,
@@ -98,10 +97,9 @@ func (s *userStorage) RegisterUser(ctx context.Context, req *pb.RegisterUserReq)
 
 	query := `
 		INSERT INTO users (
-			id, name, lastname, email, password, role, 
-			created_at, updated_at, deleted_at
+			id, fname, lname, email, password
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, 
+			$1, $2, $3, $4, $5, $6, $7, $8, 
 			CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0
 		);`
 
@@ -111,25 +109,34 @@ func (s *userStorage) RegisterUser(ctx context.Context, req *pb.RegisterUserReq)
 		return nil, err
 	}
 	id := uuid.NewString()
-	_, err = s.db.ExecContext(ctx, query, id, req.Name, req.Email, hashpass)
+	_, err = s.db.ExecContext(ctx, query, id, req.Fname, req.Lname, req.Email, hashpass)
 	if err != nil {
 		logs.Error("Error with create user")
 		return nil, err
 	}
-	userL, err := s.GetUserByID(ctx, &pb.GetUserByIDReq{Userid: id})
+
+	query1 := `select id, fname, lname, email,bio, phone, role, created_at, updated_at from users where id = $1`
+	user := pb.UserModel{}
+	err = s.db.QueryRowContext(ctx, query1, id).Scan(&user.Id, &user.Fname, &user.Lname, &user.Email,&user.Bio,&user.Phone, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		logs.Error("Error getting user", zap.Error(err))
+		return nil, err
+	}
 	if err != nil {
 		logs.Error("Error with create user")
 		return nil, err
 
 	}
 	userM := &pb.UserModel{
-		Id:        userL.UserRes.Id,
-		Name:      userL.UserRes.Name,
-		Lastname:  userL.UserRes.Lastname,
-		Email:     userL.UserRes.Email,
-		Role:      userL.UserRes.Role,
-		CreatedAt: userL.UserRes.CreatedAt,
-		UpdatedAt: userL.UserRes.UpdatedAt,
+		Id:        user.Id,
+		Fname:     user.Fname,
+		Lname:     user.Lname,
+		Email:     user.Email,
+		Bio:       user.Bio,
+		Phone:     user.Phone,
+		Role:      user.Role,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 
 	return &pb.RegisterUserRes{UserRes: userM}, nil
@@ -144,100 +151,6 @@ func (s *userStorage) ForgotPassword(ctx context.Context, req *pb.ForgotPassword
 	return nil, nil
 }
 
-func (s *userStorage) GetUserByID(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error) {
-	logs, err := logger.NewLogger()
-	if err != nil {
-		return nil, err
-	}
-
-	query := `select id,name, lastname,email, role, created_at, updated_at from users where id = $1 and deleted_at = 0`
-
-	user := pb.UserModel{}
-
-	err = s.db.QueryRowContext(ctx, query, req.Userid).Scan(
-		&user.Id, &user.Name, &user.Lastname, &user.Email, 
-		&user.Role, &user.CreatedAt, &user.UpdatedAt) // Match query order
-	if err != nil {
-		logs.Error("Error with get user")
-		return nil, err
-	}
-	return &pb.GetUserByIDRes{UserRes: &user}, err
-
-}
-
-func (s *userStorage) GetAllUsers(ctx context.Context, req *pb.GetAllUserReq) (*pb.GetAllUserRes, error) {
-	query := "SELECT id, name, lastname, email, O_CHAR(created_at, 'DD-MM-YYYY') AS created_at, updated_at FROM users WHERE deleted_at = 0"
-
-	logs, err := logger.NewLogger()
-	if err != nil {
-		return nil, err
-	}
-
-	args := []interface{}{}
-	argCounter := 1
-
-	if req.UserReq.Id != "string" && req.UserReq.Id != "" {
-		query += " AND id = $" + strconv.Itoa(argCounter)
-		args = append(args, req.UserReq.Id)
-		argCounter++
-	}
-
-	if req.UserReq.Email != "string" && req.UserReq.Email != "" {
-		query += " AND email = $" + strconv.Itoa(argCounter)
-		args = append(args, req.UserReq.Email)
-		argCounter++
-	}
-
-	if req.UserReq.Lastname != "string" && req.UserReq.Lastname != "" {
-		query += " AND lastname = $" + strconv.Itoa(argCounter)
-		args = append(args, req.UserReq.Lastname)
-		argCounter++
-	}
-
-	if req.UserReq.Name != "string" && req.UserReq.Name != "" {
-		query += " AND name = $" + strconv.Itoa(argCounter)
-		args = append(args, req.UserReq.Name)
-		argCounter++
-	}
-
-	if req.UserReq.CreatedAt != "string" && req.UserReq.CreatedAt != "" {
-		t1, err := time.Parse("01-02-2006", req.UserReq.CreatedAt)
-		if err != nil {
-			logs.Error("Error parsing date")
-			return nil, err
-		}
-		createdAtInSeconds := t1.Unix()
-		query += " AND EXTRACT(EPOCH FROM created_at) > $" + strconv.Itoa(argCounter)
-
-		args = append(args, createdAtInSeconds)
-		argCounter++
-	}
-
-	// Query execution
-	rows, err := s.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		logs.Error("Error with get all users query")
-		return nil, err
-	}
-	var users []*pb.UserModel
-	for rows.Next() {
-		user := pb.UserModel{}
-
-		err = rows.Scan(&user.Id, &user.Name, &user.Lastname, &user.Email, &user.CreatedAt, &user.Role, &user.UpdatedAt)
-		if err != nil {
-			logs.Error("Error with get all users")
-		}
-		users = append(users, &user)
-	}
-
-	resp := pb.GetAllUserRes{
-		UserRes: users,
-	}
-
-	logs.Info("Successfully get all users")
-	return &resp, nil
-
-}
 func (s *userStorage) UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error) {
 	query := "UPDATE users SET"
 	var args []interface{}
@@ -248,15 +161,15 @@ func (s *userStorage) UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*p
 		return nil, err
 	}
 	// Check for fields and build query
-	if req.UserReq.Name != "string" && req.UserReq.Name != "" {
-		updates = append(updates, " name = $"+strconv.Itoa(argCounter))
-		args = append(args, req.UserReq.Name)
+	if req.UserReq.Fname != "string" && req.UserReq.Fname != "" {
+		updates = append(updates, " fname = $"+strconv.Itoa(argCounter))
+		args = append(args, req.UserReq.Fname)
 		argCounter++
 	}
 
-	if req.UserReq.Lastname != "string" && req.UserReq.Lastname != "" {
-		updates = append(updates, " lastname = $"+strconv.Itoa(argCounter))
-		args = append(args, req.UserReq.Lastname)
+	if req.UserReq.Lname != "string" && req.UserReq.Lname != "" {
+		updates = append(updates, " lname = $"+strconv.Itoa(argCounter))
+		args = append(args, req.UserReq.Lname)
 		argCounter++
 	}
 
@@ -266,25 +179,34 @@ func (s *userStorage) UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*p
 		argCounter++
 	}
 
-	// You can add more fields here...
+	if req.UserReq.Bio != "string" && req.UserReq.Bio != "" {
+		updates = append(updates, " bio = $"+strconv.Itoa(argCounter))
+		args = append(args, req.UserReq.Bio)
+		argCounter++
+	}
 
-	// If no fields are provided, return an error
+	if req.UserReq.Phone != "string" && req.UserReq.Phone != "" {
+		updates = append(updates, " phone = $"+strconv.Itoa(argCounter))
+		args = append(args, req.UserReq.Phone)
+		argCounter++
+	}
+
 	if len(updates) == 0 {
 		return nil, errors.New("no fields to update")
 	}
 
-	// Join updates to form the final query
 	query += " " + strings.Join(updates, ", ") + " WHERE id = $" + strconv.Itoa(argCounter)
 	args = append(args, req.UserReq.Id)
-	
-	// Execute the query
+
 	_, err = s.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		// Log the error and return
 		logs.Error("Error updating user: ", zap.Error(err))
 		return nil, err
 	}
 
-	// Return success response
 	return &pb.UpdateUserRes{UserRes: req.UserReq}, nil
+}
+
+func (s *userStorage) VerifyEmail(ctx context.Context, req *pb.VerifyEmailReq) (*pb.VerifyEmailRes, error) {
+	return nil, nil
 }

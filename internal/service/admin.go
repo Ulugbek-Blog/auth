@@ -9,12 +9,12 @@ import (
 )
 
 type AdminService interface {
-	CreateAdmin(ctx context.Context, req *pb.CreateAdminReq) (*pb.CreateAdminRes, error)
-	UpdateAdmin(ctx context.Context, req *pb.UpdateAdminReq) (*pb.UpdateAdminRes, error)
-	GetAdmin(ctx context.Context, req *pb.GetAdminReq) (*pb.GetAdminRes, error)
+	CreateAdmin(ctx context.Context, req *pb.CreateUserReq) (*pb.CreateUserRes, error)
+	UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error)
+	GetUser(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error)
 	ForgetPassword(ctx context.Context, req *pb.ForgetPasswordReq) (*pb.ForgetPasswordRes, error)
-	GetAllAdmins(ctx context.Context, req *pb.GetAllAdminReq) (*pb.GetAllAdminRes, error)
-	DeleteAdmin(ctx context.Context, req *pb.DeleteAdminReq) (*pb.DeleteAdminRes, error)
+	GetAllUsers(ctx context.Context, req *pb.GetAllUsersReq) (*pb.GetAllUsersRes, error)
+	DeleteUser(ctx context.Context, req *pb.DeleteUserReq) (*pb.DeleteUserRes, error)
 }
 type AdminServiceImpl struct {
 	admin postgres.AdminStorage
@@ -27,7 +27,7 @@ func NewAdminService(admin AdminService) *AdminServiceImpl {
 	}
 }
 
-func (s *AdminServiceImpl) CreateAdmin(ctx context.Context, req *pb.CreateAdminReq) (*pb.CreateAdminRes, error) {
+func (s *AdminServiceImpl) CreateAdmin(ctx context.Context, req *pb.CreateUserReq) (*pb.CreateUserRes, error) {
 	logs, err := logger.NewLogger()
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (s *AdminServiceImpl) CreateAdmin(ctx context.Context, req *pb.CreateAdminR
 	return resp, nil
 }
 
-func (s *AdminServiceImpl) UpdateAdmin(ctx context.Context, req *pb.UpdateAdminReq) (*pb.UpdateAdminRes, error) {
+func (s *AdminServiceImpl) UpdateAdmin(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error) {
 	logs, err := logger.NewLogger()
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (s *AdminServiceImpl) UpdateAdmin(ctx context.Context, req *pb.UpdateAdminR
 	return resp, nil
 }
 
-func (s *AdminServiceImpl) GetAdmin(ctx context.Context, req *pb.GetAdminReq) (*pb.GetAdminRes, error) {
+func (s *AdminServiceImpl) GetAdmin(ctx context.Context, req *pb.GetUserByIDReq) (*pb.GetUserByIDRes, error) {
 	logs, err := logger.NewLogger()
 	if err != nil {
 		return nil, err

@@ -1,1 +1,4 @@
 
+[submodule "protos"]
+	path = protos
+	url = git@github.com:Ulugbek-Blog/protos.git
